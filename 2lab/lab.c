@@ -25,11 +25,11 @@ void *child_body(void* arg) {
 int main() {
 	int error;
 	pthread_t child;
-	if ((error = pthread_create(&child, NULL, child_body, NULL)) != 0) {
+	if ((error = pthread_create(&child, NULL, child_body, NULL)) != SUCCESS) {
 		pthread_error("pthread_create() failed", error);
 	}
 	
-	if ((error = pthread_join(child, NULL)) != 0) {
+	if ((error = pthread_join(child, NULL)) != SUCCESS) {
 		pthread_error("pthread_join() failed", error);
 	}
 
