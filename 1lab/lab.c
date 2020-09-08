@@ -7,7 +7,7 @@
 
 void pthread_error(const char *const msg, int error) {
 	fprintf(stderr, "%s: %s", msg, strerror(error));
-    exit(1);
+    	exit(1);
 }
 
 void print_str(char *str) {
