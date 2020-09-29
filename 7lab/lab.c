@@ -12,16 +12,16 @@
 int threads_amount;
 
 void error_exit(const char *const msg, int error) {
-    if (error != ERRNO_SET) {
+    	if (error != ERRNO_SET) {
 		fprintf(stderr, "%s: %s", msg, strerror(error));
-    } else {
+    	} else {
 		if (errno == 0) {
 			fprintf(stderr, "%s\n", msg);
 		} else {
 			perror(msg);
 		}
-    }
-    exit(ERROR_EXIT);
+    	}
+    	exit(ERROR_EXIT);
 }
 
 void check_args(int argc, char **argv) {
@@ -61,8 +61,8 @@ int main(int argc, char **argv) {
 
 	thread_t *thread_struct = (thread_t *)malloc(threads_amount * sizeof(thread_t));
 	if (thread_struct == NULL) {
-        error_exit("failed to allocate memory for thread_struct", ERRNO_SET);
-    }
+        	error_exit("failed to allocate memory for thread_struct", ERRNO_SET);
+    	}
 
 	for (int i = 0; i < threads_amount; i++) {
 		thread_struct[i].thread_num = i;
