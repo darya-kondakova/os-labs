@@ -5,6 +5,8 @@
 #include <semaphore.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define ERRNO_SET 0
 #define ERROR_EXIT 1
