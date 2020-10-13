@@ -24,8 +24,7 @@ void error_exit(const char *const msg, int error) {
     exit(ERROR_EXIT);
 }
 
-sem_t sem1;
-sem_t sem2;
+sem_t sem1, sem2;
 
 void my_sem_init() {
     int error = sem_init(&sem1, 0, 1);
