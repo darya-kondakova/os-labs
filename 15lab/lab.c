@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <unistd.h>
 #include <semaphore.h>
 #include <errno.h>
 #include <string.h>
-#include <fcntl.h>
 #include <sys/stat.h>
 
 #define ERRNO_SET 0
