@@ -1,2 +1,2 @@
 all:
-	gcc lab.c -std=c99 -pthread
+	gcc lab.c -std=c99 -lrt
