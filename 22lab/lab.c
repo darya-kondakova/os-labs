@@ -141,6 +141,12 @@ void exit_sig() {
             error_exit("pthread_cancel() failed", error);
         }
     }
+    for (int i = 0; i < 4; i++) {
+        error = pthread_join(creater[i], NULL);
+        if (error != SUCCESS) {
+            error_exit("pthread_join() failed", error);
+        }
+    }
     for (int i = 0; i < 5; i++) {
         error = sem_destroy(&sem[i]);
         if (error == FAIL) {
