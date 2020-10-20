@@ -32,14 +32,16 @@ void my_sem_init(sem_t **sem1, sem_t **sem2) {
 }
 
 void my_sem_close(sem_t **sem1, sem_t **sem2) {
-    sem_close(*sem1);
+    int error = sem_close(*sem1);
     if (error == FAIL) {
         error_exit("sem_close() failed", ERRNO_SET);
     }
-    sem_close(*sem2);
+    error = sem_close(*sem2);
     if (error == FAIL) {
         error_exit("sem_close() failed", ERRNO_SET);
     }
+    sem_unlink("/sem1");
+    sem_unlink("/sem2");
 }
 
 void child_body() {
@@ -50,6 +52,7 @@ void child_body() {
         if (error == FAIL) {
             error_exit("sem_wait() failed: unable to lock 2nd semaphore", ERRNO_SET);
         }
+        sleep(1);
         printf("child\n");
         error = sem_post(sem1);
         if (error == FAIL) {
@@ -57,16 +60,14 @@ void child_body() {
         }
     }
     my_sem_close(&sem1, &sem2);
-    
-    return NULL;
 }
 
-int main() {
-    int pid = fork();
-    if (pid == FAIL) {
-        error_exit("fork() failed", ERRNO_SET);
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        error_exit("Usage: ./a.out thread_number", ERRNO_SET);
     }
-    if (pid == 0) {
+    int thread_number = atoi(argv[1]);
+    if (thread_number != 0) {
         child_body();
     } else {
         sem_t *sem1, *sem2;
@@ -76,6 +77,7 @@ int main() {
             if (error == FAIL) {
                 error_exit("sem_wait() failed: unable to lock 1st semaphore", ERRNO_SET);
             }
+            sleep(1);
             printf("parent\n");
             error = sem_post(sem2);
             if (error == FAIL) {
@@ -84,6 +86,4 @@ int main() {
         }
         my_sem_close(&sem1, &sem2);
     }
-    
-    pthread_exit(NULL);
 }
