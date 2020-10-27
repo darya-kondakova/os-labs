@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "error_exit.h"
+#include <string.h>
+#include <errno.h>
 
 #define PHILO 5
 #define DELAY 30000
 #define FOOD 20
+#define SUCCESS 0
 #define ERRNO_SET 0
 #define ERROR_EXIT 1
 
@@ -84,18 +86,20 @@ void * philosopher(void *num) {
 }
 
 int main(int argn, char **argv) {
-	int error;
-    if ((error = pthread_mutex_init(&foodlock, NULL)) != 0) {
+	int error = pthread_mutex_init(&foodlock, NULL);
+    if (error != SUCCESS) {
         error_exit("pthread_mutex_init() failed", error);
     }
     for (int i = 0; i < PHILO; i++) {
-        if ((error = pthread_mutex_init(&forks[i], NULL)) != 0) {
+		error = pthread_mutex_init(&forks[i], NULL);
+        if (error != SUCCESS) {
             error_exit("pthread_mutex_init() failed", error);
         }
     }
     pthread_t phils[PHILO];
     for (int i = 0; i < PHILO; i++) {
-        if ((error = pthread_create(&phils[i], NULL, philosopher, (void *)((long)i))) != 0) {
+		error = pthread_create(&phils[i], NULL, philosopher, (void *)((long)i));
+        if (error != SUCCESS) {
             error_exit("pthread_create() failed", error);
         }
     }
