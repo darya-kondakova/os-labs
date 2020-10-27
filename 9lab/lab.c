@@ -8,6 +8,7 @@
 #define PHILO 5
 #define DELAY 30000
 #define FOOD 50
+#define SUCCESS 0
 #define ERRNO_SET 0
 #define ERROR_EXIT 1
 
@@ -76,31 +77,31 @@ void *philosopher(void *num) {
 
 int main(int argn, char **argv) {
 	int error = pthread_mutex_init(&foodlock, NULL);
-    if (error != 0) {
+    if (error != SUCCESS) {
 		error_exit("pthread_mutex_init() failed", error);
 	}
     for (int i = 0; i < PHILO; i++) {
 		error = pthread_mutex_init(&forks[i], NULL); 
-        if (error != 0) {
+        if (error != SUCCESS) {
 			error_exit("pthread_mutex_init() failed", error);
 		}
 	}
 	pthread_t phils[PHILO];
     for (int i = 0; i < PHILO; i++) {
 		error = pthread_create(&phils[i], NULL, philosopher, (void *)((long)i));
-    	if (error != 0) {
+    	if (error != SUCCESS) {
 			error_exit("pthread_create() failed", error);
 		}
 	}
     for (int i = 0; i < PHILO; i++) {
         error = pthread_join(phils[i], NULL);
-		if (error != 0) {
+		if (error != SUCCESS) {
 			error_exit("pthread_join() failed", error);
 		}
 	}
 	for (int i = 0; i < PHILO; i++) {
         error = pthread_mutex_destroy(&forks[i]);
-        if (error != 0) {
+        if (error != SUCCESS) {
             error_exit("pthread_mutex_destroy() failed", error);
         }
     }
