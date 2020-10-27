@@ -87,9 +87,9 @@ int main(int argn, char **argv) {
 		}
 	}
 	pthread_t phils[PHILO];
-   	 for (int i = 0; i < PHILO; i++) {
+   	for (int i = 0; i < PHILO; i++) {
 		error = pthread_create(&phils[i], NULL, philosopher, (void *)((long)i));
-    	if (error != SUCCESS) {
+    		if (error != SUCCESS) {
 			error_exit("pthread_create() failed", error);
 		}
 	}
