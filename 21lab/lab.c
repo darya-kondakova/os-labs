@@ -103,8 +103,17 @@ int main(int argn, char **argv) {
             error_exit("pthread_create() failed", error);
         }
     }
-    /*for (int i = 0; i < PHILO; i++)
-        pthread_join(phils[i], NULL);
-    return 0;*/
+	for (int i = 0; i < PHILO; i++) {
+        error = pthread_join(phils[i], NULL);
+        if (error != SUCCESS) {
+            error_exit("pthread_join() failed", error);
+        }
+    }
+    for (int i = 0; i < PHILO; i++) {
+        error = pthread_mutex_destroy(&forks[i]);
+        if (error != SUCCESS) {
+            error_exit("pthread_mutex_destroy() failed", error);
+        }
+    }
     pthread_exit(NULL);
 }
