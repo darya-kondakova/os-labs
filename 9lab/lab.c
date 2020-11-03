@@ -28,27 +28,42 @@ void error_exit(const char *const msg, int error) {
 pthread_mutex_t forks[PHILO];
 pthread_mutex_t foodlock;
 
+void my_pthread_mutex_lock(pthread_mutex_t *mutex) {
+    int error = pthread_mutex_lock(mutex);
+    if (error != SUCCESS) {
+        error_exit("pthread_mutex_lock() failed", error);
+    }
+}
+
+void my_pthread_mutex_unlock(pthread_mutex_t *mutex) {
+    int error = pthread_mutex_unlock(mutex);
+    if (error != SUCCESS) {
+        error_exit("pthread_mutex_unlock() failed", error);
+    }
+
+}
+
 int food_on_table() {
 	static int food = FOOD;
 
-	pthread_mutex_lock(&foodlock);
+	my_pthread_mutex_lock(&foodlock);
     	if (food > 0) {
         	food--;
     	}
     	int myfood = food;
-    	pthread_mutex_unlock(&foodlock);
+    	my_pthread_mutex_unlock(&foodlock);
 
     	return myfood;
 }
 
 void get_fork(int phil, int fork, char *hand) {
-	pthread_mutex_lock(&forks[fork]);
+	my_pthread_mutex_lock(&forks[fork]);
 	printf("Philosopher %d: got %s fork %d\n", phil, hand, fork);
 }
 
 void down_forks(int f1, int f2) {
-	pthread_mutex_unlock(&forks[f1]);
-	pthread_mutex_unlock(&forks[f2]);
+	my_pthread_mutex_unlock(&forks[f1]);
+	my_pthread_mutex_unlock(&forks[f2]);
 }
 
 void *philosopher(void *num) {
