@@ -44,6 +44,14 @@ void my_pthread_mutex_unlock(pthread_mutex_t *mutex) {
     }
 }
 
+int my_pthread_mutex_trylock(pthread_mutex_t *mutex) {
+    int error = pthread_mutex_trylock(mutex);
+    if (error != SUCCESS && error != EBUSY) {
+        error_exit("pthread_mutex_trylock() failed", error);
+    }
+    return error;
+}
+
 int food_on_table() {
     static int food = FOOD;
 
@@ -60,8 +68,8 @@ int food_on_table() {
 void get_forks(int phil, int f1, int f2) {
     my_pthread_mutex_lock(&add_fork);
     for (;;) {
-        if (!pthread_mutex_trylock(&forks[f1])) {
-            if (!pthread_mutex_trylock(&forks[f2])) {
+        if (!my_pthread_mutex_trylock(&forks[f1])) {
+            if (!my_pthread_mutex_trylock(&forks[f2])) {
                 my_pthread_mutex_unlock(&add_fork);
                 printf("Philosopher %d: got forks %d-%d\n", phil, f1, f2);
                 return;
@@ -76,14 +84,12 @@ void get_forks(int phil, int f1, int f2) {
 }
 
 void down_forks(int f1, int f2) {
-    my_pthread_mutex_lock(&add_fork);
     my_pthread_mutex_unlock(&forks[f1]);
     my_pthread_mutex_unlock(&forks[f2]);
     int error = pthread_cond_broadcast(&condition);
     if (error != SUCCESS) {
         error_exit("pthread_cond_broadcast() failed", error);
     }
-    my_pthread_mutex_unlock(&add_fork);
 }
 
 void * philosopher(void *num) {
