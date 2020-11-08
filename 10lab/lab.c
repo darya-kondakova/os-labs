@@ -77,11 +77,11 @@ void *child_body(void* arg) {
     for (int i = 0; i < 10; i++) {
         my_pthread_mutex_lock(&mutex[0]);
         my_pthread_mutex_unlock(&mutex[2]);
-        //my_pthread_mutex_lock(&mutex[1]);
+        my_pthread_mutex_lock(&mutex[1]);
         printf("child\n");
         my_pthread_mutex_unlock(&mutex[0]);
         my_pthread_mutex_lock(&mutex[2]);
-        //my_pthread_mutex_unlock(&mutex[1]);
+        my_pthread_mutex_unlock(&mutex[1]);
     }
 
     my_pthread_mutex_unlock(&mutex[2]);
@@ -93,7 +93,7 @@ int main() {
     mutex_init();
 
     my_pthread_mutex_lock(&mutex[0]);
-    //my_pthread_mutex_lock(&mutex[1]);
+    my_pthread_mutex_lock(&mutex[1]);
 
     pthread_t child;
     int error = pthread_create(&child, NULL, child_body, NULL);
@@ -104,18 +104,17 @@ int main() {
     //sleep(1);
 
     for (int i = 0; i < 10; i++) {
-		sleep(1);
         printf("parent\n");
         my_pthread_mutex_unlock(&mutex[0]);
         my_pthread_mutex_lock(&mutex[2]);
-        //my_pthread_mutex_unlock(&mutex[1]);
+        my_pthread_mutex_unlock(&mutex[1]);
         my_pthread_mutex_lock(&mutex[0]);
         my_pthread_mutex_unlock(&mutex[2]);
-        //my_pthread_mutex_lock(&mutex[1]);
+        my_pthread_mutex_lock(&mutex[1]);
     }
 
     my_pthread_mutex_unlock(&mutex[0]);
-    //my_pthread_mutex_unlock(&mutex[1]);
+    my_pthread_mutex_unlock(&mutex[1]);
 
     error = pthread_join(child, NULL);
     if (error != SUCCESS) {
