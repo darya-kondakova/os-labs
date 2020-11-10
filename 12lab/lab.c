@@ -55,22 +55,22 @@ void my_pthread_mutex_lock(pthread_mutex_t *mutex) {
     }
 }
 
-void print_str(char *str) {
+void print_str(char *str, int thread) {
     int error;
     for (int i = 0; i < 10; i++) {
-        printf("%s\n", str);
-        prev_printed = (prev_printed + 1) % THREADS;
-
-        error = pthread_cond_signal(&condition);
-        if (error != SUCCESS) {
-            error_exit("pthread_cond_signal() failed", error);
-        }
-
-        while (prev_printed != prev_thread) {
+        while (thread != can_print) {
             error = pthread_cond_wait(&condition, &mutex);
             if (error != SUCCESS) {
                 error_exit("pthread_cond_wait() failed", error);
             }
+        }
+        
+        printf("%s\n", str);
+        can_print = (can_print + 1) % THREADS;
+
+        error = pthread_cond_signal(&condition);
+        if (error != SUCCESS) {
+            error_exit("pthread_cond_signal() failed", error);
         }
     }
 
@@ -100,7 +100,6 @@ int main() {
 
     print_str("parent", 0);
 
-    prev_printed = (prev_printed + 1) % THREADS;
     error = pthread_cond_signal(&condition);
     if (error != SUCCESS) {
         error_exit("pthread_cond_signal() failed", error);
