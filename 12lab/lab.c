@@ -23,6 +23,7 @@ void error_exit(const char *const msg, int error) {
 }
 
 pthread_mutex_t mutex;
+int prev_printed = 0;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 
 void mutex_init() {
@@ -58,15 +59,18 @@ void print_str(char *str) {
     int error;
     for (int i = 0; i < 10; i++) {
         printf("%s\n", str);
+        prev_printed = (prev_printed + 1) % THREADS;
 
         error = pthread_cond_signal(&condition);
         if (error != SUCCESS) {
             error_exit("pthread_cond_signal() failed", error);
         }
 
-        error = pthread_cond_wait(&condition, &mutex);
-        if (error != SUCCESS) {
-            error_exit("pthread_cond_wait() failed", error);
+        while (prev_printed != prev_thread) {
+            error = pthread_cond_wait(&condition, &mutex);
+            if (error != SUCCESS) {
+                error_exit("pthread_cond_wait() failed", error);
+            }
         }
     }
 
@@ -79,7 +83,7 @@ void print_str(char *str) {
 void *child_body(void* arg) {
     my_pthread_mutex_lock(&mutex);
 
-    print_str("child");
+    print_str("child", 1);
 
     return NULL;
 }
@@ -94,8 +98,9 @@ int main() {
         error_exit("pthread_create() failed", error);
     }
 
-    print_str("parent");
+    print_str("parent", 0);
 
+    prev_printed = (prev_printed + 1) % THREADS;
     error = pthread_cond_signal(&condition);
     if (error != SUCCESS) {
         error_exit("pthread_cond_signal() failed", error);
