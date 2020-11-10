@@ -22,7 +22,7 @@ void error_exit(const char *const msg, int error) {
     exit(ERROR_EXIT);
 }
 
-pthread_mutex_t mutex1;
+pthread_mutex_t mutex;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 
 void mutex_init() {
@@ -36,7 +36,7 @@ void mutex_init() {
         error_exit("pthread_mutexattr_settype() failed", error);
     }
 
-    error = pthread_mutex_init(&mutex1, &mutex_attr);
+    error = pthread_mutex_init(&mutex, &mutex_attr);
     if (error != SUCCESS) {
         error_exit("pthread_mutex_init() failed", error);
     }
@@ -64,20 +64,20 @@ void print_str(char *str) {
             error_exit("pthread_cond_signal() failed", error);
         }
 
-        error = pthread_cond_wait(&condition, &mutex1);
+        error = pthread_cond_wait(&condition, &mutex);
         if (error != SUCCESS) {
             error_exit("pthread_cond_wait() failed", error);
         }
     }
 
-    error = pthread_mutex_unlock(&mutex1);
+    error = pthread_mutex_unlock(&mutex);
     if (error != SUCCESS) {
         error_exit("pthread_mutex_unlock() failed", error);
     }
 }
 
 void *child_body(void* arg) {
-    my_pthread_mutex_lock(&mutex1);
+    my_pthread_mutex_lock(&mutex);
 
     print_str("child");
 
@@ -86,7 +86,7 @@ void *child_body(void* arg) {
 
 int main() {
     mutex_init();
-    my_pthread_mutex_lock(&mutex1);
+    my_pthread_mutex_lock(&mutex);
 
     pthread_t child;
     int error = pthread_create(&child, NULL, child_body, NULL);
@@ -106,7 +106,7 @@ int main() {
         error_exit("pthread_join() failed", error);
     }
 
-    error = pthread_mutex_destroy(&mutex1);
+    error = pthread_mutex_destroy(&mutex);
     if (error != SUCCESS) {
         error_exit("pthread_mutex_destroy() failed", error);
     }
