@@ -58,6 +58,15 @@ void my_pthread_mutex_lock(pthread_mutex_t *mutex) {
 void print_str(char *str, int thread) {
     int error;
     for (int i = 0; i < 10; i++) {
+        /* 
+            Используем цикл while(), т.к.
+            1)  при использовании pthread_cond_broadcast() (для программы на >2 потоках) все потоки будут просыпаться из pthread_cond_wait(),
+                но только один должен будет начать печатать. Такое пробуджение будет происходить несколько раз, поэтому при каждом пробуждении
+                поток должен проверять предикат (его ли очередь печатать)
+            2)  стандарт POSIX допускает ложные сработки (spurious wakeup), т.е. выход из pthread_cond_wait() без вызова кем-либо 
+                pthread_cond_signal() или pthread_cond_broadcast(). Выход из pthread_cond_wait() ничего не говорит о значении предиката,
+                поэтому предикат всегда следует перепроверять
+        */
         while (thread != can_print) {
             error = pthread_cond_wait(&condition, &mutex);
             if (error != SUCCESS) {
