@@ -100,33 +100,6 @@ int main() {
         error_exit("pthread_create() failed", error);
     }
 
-    /*char str[STR_SIZE+1];
-    for (;;) {
-        std::cout << "Enter the string: ";
-        bool new_line = true;
-        do {
-            fgets(str, STR_SIZE+1, stdin);
-            if (str[0] == '\n' && new_line) {
-                my_pthread_mutex_lock(&list_mutex);
-                for (string n : l) {
-                    std::cout << n << '\n';
-                }
-                my_pthread_mutex_unlock(&list_mutex);
-            } else {
-                if (str[strlen(str) - 1] == '\n') {
-                    str[strlen(str) - 1] = '\0';
-                    new_line = true;
-                } else {
-                    new_line = false;
-                }
-                if (strlen(str) > 0) {
-                    my_pthread_mutex_lock(&list_mutex);
-                    l.push_front(str);
-                    my_pthread_mutex_unlock(&list_mutex);
-                }
-            }
-        } while (!new_line);
-    }*/
     string input_str;
     for (;;) {
         cout << "Enter the string: ";
