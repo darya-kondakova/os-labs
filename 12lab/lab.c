@@ -23,7 +23,7 @@ void error_exit(const char *const msg, int error) {
 }
 
 pthread_mutex_t mutex;
-int prev_printed = 0;
+int can_print = 0;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 
 void mutex_init() {
