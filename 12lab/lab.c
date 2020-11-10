@@ -109,11 +109,6 @@ int main() {
 
     print_str("parent", 0);
 
-    error = pthread_cond_signal(&condition);
-    if (error != SUCCESS) {
-        error_exit("pthread_cond_signal() failed", error);
-    }
-
     error = pthread_join(child, NULL);
     if (error != SUCCESS) {
         error_exit("pthread_join() failed", error);
