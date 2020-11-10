@@ -101,7 +101,7 @@ int main() {
         error_exit("pthread_create() failed", error);
     }
 
-    //sleep(1);
+    sleep(1);
 
     for (int i = 0; i < 10; i++) {
         printf("parent\n");
