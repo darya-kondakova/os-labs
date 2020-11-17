@@ -70,7 +70,7 @@ void *sort_list(void* arg) {
     for (;;) {
         sleep(5);
         my_pthread_mutex_lock(&list_mutex);
-        for (int i = 0; i < l.size(); i++) {
+        for (auto i = 0; i < l.size(); i++) {
             bool list_is_sorted = true;
             for (auto it1 = l.begin(); it1 != prev(l.end()); it1++) {
                 auto it2 = next(it1);
@@ -112,10 +112,9 @@ int main() {
             my_pthread_mutex_unlock(&list_mutex);
             continue;
         }
-        for (int i = 0; i <= (input_str.length() - 1) / STR_SIZE; i++) {
-            string str(input_str, i * STR_SIZE, min(input_str.length() - i * STR_SIZE, STR_SIZE));
+        for (auto i = 0; i < input_str.length(); i += STR_SIZE) {
             my_pthread_mutex_lock(&list_mutex);
-            l.push_front(str);
+            l.push_front(input_str.substr(i, STR_SIZE));
             my_pthread_mutex_unlock(&list_mutex);
         }
     }
