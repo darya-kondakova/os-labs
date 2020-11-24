@@ -12,7 +12,7 @@
 using namespace std;
 
 #define min(a, b) a < b ? a : b
-#define STR_SIZE 4
+#define STR_SIZE 80
 #define SUCCESS 0
 #define ERRNO_SET 0
 #define ERROR_EXIT 1
