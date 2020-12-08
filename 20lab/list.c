@@ -126,6 +126,9 @@ void sort(list_elem *head) {
                     foll = foll->next;
                 }
                 list_rwlock_unlock(&prev->lock);
+                if (prev == head) {
+                    list_rwlock_rdlock(&head->lock);
+                }
                 prev = cur;
                 cur = foll;
                 foll = foll->next;
@@ -138,5 +141,6 @@ void sort(list_elem *head) {
             list_rwlock_unlock(&cur->lock);
         }
         list_rwlock_unlock(&prev->lock);
+        list_rwlock_unlock(&head->lock);
     }
 }
