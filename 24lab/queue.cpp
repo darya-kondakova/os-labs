@@ -20,7 +20,6 @@ Queue::~Queue() {
 
 void Queue::mymsgdrop() {
     droped = true;
-    size = 0;
     pthread_cond_broadcast(&cond);
     pthread_mutex_lock(&queue_mutex);
     struct queue_element *t = head;
@@ -29,6 +28,7 @@ void Queue::mymsgdrop() {
         free(t);
         t = t1;
     }
+    size = 0;
     pthread_mutex_unlock(&queue_mutex);
 }
 
