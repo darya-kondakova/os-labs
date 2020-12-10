@@ -12,25 +12,28 @@
 #define CONSUMERS 2
 #define SUCCESS 0
 
+typedef struct thread_struct {
+	int thread_num;
+	Queue *queue;
+} thread_t;
+
 void *producer(void *arg) {
-	Queue *queue = (Queue *)arg;
+    Queue *queue = ((thread_t *)arg)->queue;
 	for(int i = 0; ; i++) {
-		usleep(1000);
+        usleep(1000);
 		char buf[40];
-		sprintf(buf, "Message %d from thread %d", i, pthread_self());
+		sprintf(buf, "Message %d from thread %d", i, ((thread_t *)arg)->thread_num);
 		queue->mymsgput(buf);
-		printf("put\n");
 	}
 }
 
 void *consumer(void *arg) {
-	Queue *queue = (Queue *)arg;
+    Queue *queue = ((thread_t *)arg)->queue;
 	for (;;) {
-        	sleep(2);
+        sleep(2);
 		char buf[41];
-        	queue->mymsgget(buf, sizeof(buf));
-		printf("Received by thread %d: %s\n", pthread_self(), buf);
-        	printf("get\n");
+        queue->mymsgget(buf, sizeof(buf));
+		printf("Received by thread %d: %s\n", ((thread_t *)arg)->thread_num, buf);
 	}
 }
 
@@ -43,42 +46,52 @@ void exit_sig(int sig) {
 int main(int argc, char **argv) {
 	sigset(SIGINT, exit_sig);
 
-	Queue *queue = new Queue();
+    thread_t *thread_struct = (thread_t *)malloc((PRODUCERS + CONSUMERS) * sizeof(thread_t));
+    if (thread_struct == NULL) {
+        error_exit("failed to allocate memory for thread_struct", ERRNO_SET);
+    }
 
-	pthread_t threads[PRODUCERS + CONSUMERS];
-	int error;
-	for (int i = 0; i < PRODUCERS; i++) {
-		error = pthread_create(&threads[i], NULL, producer, queue);
-		if (error != SUCCESS) {
-			error_exit("pthread_create() failed", error);
-		}
-	}
-	for (int i = 0; i < CONSUMERS; i++) {
-        	error = pthread_create(&threads[PRODUCERS + i], NULL, consumer, queue);
-        	if (error != SUCCESS) {
-            		error_exit("pthread_create() failed", error);
-        	}
+    Queue *queue = new Queue();
+
+    pthread_t threads[PRODUCERS + CONSUMERS];
+    int error;
+    for (int i = 0; i < PRODUCERS; i++) {
+        thread_struct[i].thread_num = i;
+        thread_struct[i].queue = queue;
+        error = pthread_create(&threads[i], NULL, producer, &thread_struct[i]);
+        if (error != SUCCESS) {
+            error_exit("pthread_create() failed", error);
+        }
+    }
+	for (int i = PRODUCERS; i < PRODUCERS + CONSUMERS; i++) {
+        thread_struct[i].thread_num = i;
+        thread_struct[i].queue = queue;
+        error = pthread_create(&threads[i], NULL, consumer, &thread_struct[i]);
+        if (error != SUCCESS) {
+            error_exit("pthread_create() failed", error);
+        }
 	}
 
-	while (!interrupt) {}
+    while (!interrupt) {}
 
 	queue->mymsgdrop();
 
-	for (int i = 0; i < PRODUCERS + CONSUMERS; i++) {
-		error = pthread_cancel(threads[i]);
-		if (error != SUCCESS) {
-			error_exit("pthread_cancel() failed", error);
-		}
-	}
+    for (int i = 0; i < PRODUCERS + CONSUMERS; i++) {
+        error = pthread_cancel(threads[i]);
+        if (error != SUCCESS) {
+            error_exit("pthread_cancel() failed", error);
+        }
+    }
 
 	for (int i = 0; i < PRODUCERS + CONSUMERS; i++) {
-		error = pthread_join(threads[i], NULL);
-		if (error != SUCCESS) {
-			error_exit("pthread_join() failed", error);
-		}
+        error = pthread_join(threads[i], NULL);
+        if (error != SUCCESS) {
+            error_exit("pthread_join() failed", error);
+        }
 	}
 
-	delete queue;
+    free(thread_struct);
+    delete queue;
 
 	return 0;	
 }
