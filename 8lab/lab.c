@@ -53,7 +53,6 @@ void *pi_calc(void* arg) {
             ((thread_t *)arg)->res = pi_part;
             pthread_exit(NULL);
         }
-        pthread_barrier_wait(&barrier);
         for (double i = ((thread_t *)arg)->thread_num; i < CHECK_STEP; i += threads_amount) {
             pi_part += 1 / (4.0 * (j * CHECK_STEP + i) + 1.0);
             pi_part -= 1 / (4.0 * (j * CHECK_STEP + i) + 3.0);
