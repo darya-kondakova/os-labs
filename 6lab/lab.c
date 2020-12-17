@@ -146,9 +146,9 @@ void *cpFunction(void *arg) {
     struct stat statBuffer;
     char *sourcePath = ((char **) arg)[0];
     char *destinationPath = ((char **) arg)[1];
-
-    if (stat(sourcePath, &statBuffer) != SUCCESS) {
-        free_charsets(arg);
+    
+    int error = stat(sourcePath, &statBuffer);
+    if (error != SUCCESS) {
         error_exit("stat() failed\n", ERRNO_SET);
     }
     if (S_ISDIR(statBuffer.st_mode)) {
