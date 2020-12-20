@@ -60,6 +60,11 @@ size_t direntLen;
 
 void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode) {
     DIR *dir;
+    /*открываем поток каталога sourcePath функцией opendir()
+    если opendir() завершился ошибкой, т.е. вернул NULL в dir, то проверяем, что это за ошибка:
+    не EMFILE - выводим ошибку, завершаем выполнение функции copyFolder();
+    если EMFILE (процесс использует слишком много открытых потоков) встаём в ожидание в sleep(1), 
+    пока, может быть, не закроются потоки в других нитях и повторям попытку открыть поток*/
     for(;;) {
         dir = opendir(sourcePath);
         if (dir == NULL) {
@@ -81,14 +86,17 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
 
     struct dirent *entry = (struct dirent *) malloc(direntLen);
     if (entry == NULL) {
-        fprintf(stderr, "malloc() failed, %s", strerror(errno));
+        perror("malloc() failed");
         return;
     }
-    
-    struct dirent *result;
     for(;;) {
-        ret_val = readdir_r(dir, entry, &result);
-        if (ret_val != SUCCESS || result == NULL) {
+        /*readdir() возвращает указатель на следующую запись каталога 
+        в структуре dirent, прочитанную из потока каталога.*/
+        entry = readdir(dir);
+        if (entry == NULL) {
+            if (errno != 0) {
+                perror("readdir() failed");
+            }
             break;
         }
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
@@ -97,6 +105,9 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
 
         char **newPaths = build_new_paths(sourcePath, destinationPath, entry->d_name);
 
+        /*создаём поток для копирования следующей записи каталога
+        если вызов pthread_create() завршился с ошибкой EAGAIN (недостаточно ресурсов для создания другой нити) - 
+        встаём в ожидание в sleep(1), пока, может быть, не завершаться другие нити и повторяем попытку создать поток*/
         pthread_t thread;
         for (;;) {
             ret_val = pthread_create(&thread, NULL, cpFunction, (void *) newPaths);
@@ -113,6 +124,7 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
         }
     }
     free(entry);
+    
     ret_val = closedir(dir);
     if (ret_val != SUCCESS) {
         perror("closedir() failed");
@@ -121,6 +133,11 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
 
 void copyFile(const char *sourcePath, const char *destinationPath, mode_t mode) {
     int fdin, fdout;
+    /*открываем файлы sourcePath и destinationPath функцией open()
+    если open() завершился ошибкой, т.е. вернул -1, то проверяем, что это за ошибка:
+    не EMFILE - выводим ошибку, завершаем выполнение функции copyFile();
+    если EMFILE (процесс открыл максимально допустимое количество файлов) встаём в ожидание в sleep(1), 
+    пока, может быть, не закроются файлы в других нитях и повторям попытку открыть файл*/
     for (;;) {
         fdin = open(sourcePath, O_RDONLY);
         if (fdin == FAIL) {
@@ -149,6 +166,7 @@ void copyFile(const char *sourcePath, const char *destinationPath, mode_t mode) 
         break;
     }
     
+    /*копируем данные из файла sourcePath в файл destinationPath*/
     for (;;) {
         int bytes_read = read(fdin, buffer, FILE_BUFFER_SIZE);
         if (bytesRead > 0) {
@@ -179,6 +197,9 @@ void *cpFunction(void *arg) {
     char *sourcePath = ((char **) arg)[0];
     char *destinationPath = ((char **) arg)[1];
     
+    /*определять тип файла при помощи stat(2):
+    если это директория - использыем функцию copyFolder();
+    если это обычный файл - copyFile()*/
     int error = stat(sourcePath, &statBuffer);
     if (error != SUCCESS) {
         error_exit("stat() failed\n", ERRNO_SET);
