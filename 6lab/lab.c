@@ -59,17 +59,22 @@ void *cpFunction(void *arg);
 size_t direntLen;
 
 void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode) {
-    int error;
     DIR *dir;
-    while ((dir = opendir(sourcePath)) == NULL) {
-        if (errno != EMFILE) {
-            fprintf(stderr, "Couldn't open directory %s, %s\n", sourcePath, strerror(errno));
-            return;
+    for(;;) {
+        dir = opendir(sourcePath);
+        if (dir == NULL) {
+            if (errno != EMFILE) {
+                fprintf(stderr, "Couldn't open directory %s, %s\n", sourcePath, strerror(errno));
+                return;
+            }
+            sleep(1);
+            continue;
         }
-        sleep(1);
+        break;
     }
 
-    if (mkdir(destinationPath, mode) != SUCCESS) {
+    int ret_val = mkdir(destinationPath, mode);
+    if (ret_val != SUCCESS) {
         fprintf(stderr, "Couldn't create directory %s, %s\n", destinationPath, strerror(errno));
         return;
     }
@@ -79,8 +84,13 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
         fprintf(stderr, "malloc() failed, %s", strerror(errno));
         return;
     }
+    
     struct dirent *result;
-    while (readdir_r(dir, entry, &result) == SUCCESS && result != NULL) {
+    for(;;) {
+        ret_val = readdir_r(dir, entry, &result);
+        if (ret_val != SUCCESS || result == NULL) {
+            break;
+        }
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
@@ -89,9 +99,9 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
 
         pthread_t thread;
         for (;;) {
-            error = pthread_create(&thread, NULL, cpFunction, (void *) newPaths);
-            if (error != SUCCESS) {
-                if (error != EAGAIN) {
+            ret_val = pthread_create(&thread, NULL, cpFunction, (void *) newPaths);
+            if (ret_val != SUCCESS) {
+                if (ret_val != EAGAIN) {
                     free_charsets(newPaths);
                     fprintf(stderr, "Couldn't copy %s, %s\n", newPaths[0], strerror(errno));
                     break;
@@ -103,41 +113,63 @@ void copyFolder(const char *sourcePath, const char *destinationPath, mode_t mode
         }
     }
     free(entry);
-    if (closedir(dir) != SUCCESS) {
+    ret_val = closedir(dir);
+    if (ret_val != SUCCESS) {
         perror("closedir() failed");
     }
 }
 
 void copyFile(const char *sourcePath, const char *destinationPath, mode_t mode) {
     int fdin, fdout;
-    while ((fdin = open(sourcePath, O_RDONLY)) == FAIL) {
-        if (errno != EMFILE) {
-            fprintf(stderr, "Couldn't open file %s, %s\n", sourcePath, strerror(errno));
-            return;
-        }
-        sleep(1);
-    }
-    while ((fdout = open(destinationPath, O_WRONLY | O_CREAT | O_EXCL, mode)) == FAIL) {
-        if (errno != EMFILE) {
-            fprintf(stderr, "Couldn't open file %s, %s\n", destinationPath, strerror(errno));
-            if (close(fdin) != SUCCESS) {
-                perror("close() failed");
+    for (;;) {
+        fdin = open(sourcePath, O_RDONLY);
+        if (fdin == FAIL) {
+            if (errno != EMFILE) {
+                fprintf(stderr, "Couldn't open file %s, %s\n", sourcePath, strerror(errno));
+                return;
             }
-            return;
+            sleep(1);
+            continue;
         }
-        sleep(1);
+        break;
+    }
+    for (;;) {
+        fdout = open(destinationPath, O_WRONLY | O_CREAT | O_EXCL, mode);
+        if (fduot == FAIL) {
+            if (errno != EMFILE) {
+                fprintf(stderr, "Couldn't open file %s, %s\n", destinationPath, strerror(errno));
+                if (close(fdin) != SUCCESS) {
+                    perror("close() failed");
+                }
+                return;
+            }
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+    
+    for (;;) {
+        int bytes_read = read(fdin, buffer, FILE_BUFFER_SIZE);
+        if (bytesRead > 0) {
+            int bytes_write write(fdout, buffer, bytesRead);
+            if (bytes_write == FAIL) {
+                perror("write() failed");
+            }
+            continue;
+        }
+        if (bytesRead == FAIL) {
+            perror("read() failed");
+        }
+        break;
     }
 
-    int bytesRead;
-    char buffer[FILE_BUFFER_SIZE];
-    while ((bytesRead = read(fdin, buffer, FILE_BUFFER_SIZE)) > 0) {
-        write(fdout, buffer, bytesRead);
-    }
-
-    if (close(fdin) != SUCCESS) {
+    int ret_val = close(fdin);
+    if (ret_val != SUCCESS) {
         perror("close() failed");
     }
-    if (close(fdout) != SUCCESS) {
+    ret_val = close(fdout);
+    if (ret_val != SUCCESS) {
         perror("close() failed");
     }
 }
@@ -165,11 +197,19 @@ int main(int argc, char **argv) {
         error_exit("Usage: ./a.out <copy source> <copy destination>\n", 0);
     }
 
+    char *copy[2];
+    for (int i = 0; i < 2; i++) {
+        copy[i] = (char *)malloc(sizeof(char) * strlen(argv[i + 1]));
+        strcpy(copy[i], argv[i + 1]);
+        if (copy[i][strlen(argv[i + 1]) - 1] == '/') {
+            copy[i][strlen(argv[i + 1]) - 1] = '\0';
+        }
+    }
     size_t pathlen = pathconf(argv[1], _PC_NAME_MAX);
     pathlen = (pathlen == -1) ? 255 : pathlen;
     direntLen = offsetof(struct dirent, d_name) + pathlen + 1;
 
-    cpFunction((argv + 1));
+    cpFunction(copy);
 
     pthread_exit(NULL);
 }
