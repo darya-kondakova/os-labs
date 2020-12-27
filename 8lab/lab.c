@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
+#include <float.h>
 
 #define CHECK_STEP 1000000
 #define MAX_THREADS_AMOUNT 800
@@ -18,13 +19,7 @@ int exit_flag = 0;
 int threads_exit_flag = 0;
 pthread_barrier_t barrier;
 
-/*
-    The maximum number of significant iterations:
-        size_t overflow or double underflow
-        are above this limit
-*/
-const size_t iter_cnt_limit = 
-                sizeof(size_t) * 8 >= 53 ? ((size_t)1 << 53) : (size_t)(-1);
+double MAX_MIL_ITER = (1.0 - 3.0 * DBL_EPSILON) / (4.0 * DBL_EPSILON * CHECK_STEP) - 1;
 
 void error_exit(const char *const msg, int error) {
     if (error != ERRNO_SET) {
@@ -53,8 +48,8 @@ void my_pthread_barrier_wait() {
 
 void *pi_calc(void* arg) {
     double pi_part = 0.0;
-    for (double j = 0; ; j++)  {
-        if (exit_flag) {
+    for (double j = 0; j < MAX_MIL_ITER; j++)  {
+        if (exit_flag && !threads_exit_flag) {
             threads_exit_flag = 1;
         }
         my_pthread_barrier_wait();
